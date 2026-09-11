@@ -74,10 +74,6 @@ def send_telegram(message):
 # PARSE EVENT TIME
 # ============================================================
 def parse_event_time(date_string):
-    """
-    Convert Forex Factory event time to UTC.
-    Forex Factory's JSON dates are normally ISO timestamps.
-    """
     event_time = datetime.fromisoformat(
         date_string.replace("Z", "+00:00")
     )
@@ -102,19 +98,15 @@ def warning_message(event, event_time):
     forecast_text = forecast if forecast else "N/A"
     previous_text = previous if previous else "N/A"
     return (
-        "⏰ PIPPULSE — 15 MINUTE WARNING\n"
-        "\n"
-        f"🔴 High Impact\n"
+        "⏰ PIPPULSE — 15 MINUTE WARNING\n\n"
+        "🔴 High Impact\n"
         f"💱 Currency: {currency}\n"
         f"📰 Event: {title}\n"
-        f"⏱️ Release: {nigeria_time(event_time)}\n"
-        "\n"
+        f"⏱️ Release: {nigeria_time(event_time)}\n\n"
         f"📊 Forecast: {forecast_text}\n"
-        f"📉 Previous: {previous_text}\n"
-        "\n"
+        f"📉 Previous: {previous_text}\n\n"
         "⚠️ HIGH VOLATILITY EXPECTED\n"
-        "Consider reducing risk and avoid entering blindly before the release.\n"
-        "\n"
+        "Consider reducing risk and avoid entering blindly before the release.\n\n"
         "🔗 Forex Factory Calendar:\n"
         "https://www.forexfactory.com/calendar"
     )
@@ -131,20 +123,16 @@ def release_message(event, event_time):
     previous_text = previous if previous else "N/A"
     actual_text = actual if actual else "Waiting for actual"
     return (
-        "🚨 PIPPULSE — NEWS RELEASED\n"
-        "\n"
-        f"🔴 HIGH IMPACT\n"
+        "🚨 PIPPULSE — NEWS RELEASED\n\n"
+        "🔴 HIGH IMPACT\n"
         f"💱 Currency: {currency}\n"
         f"📰 Event: {title}\n"
-        f"⏰ Release: {nigeria_time(event_time)}\n"
-        "\n"
+        f"⏰ Release: {nigeria_time(event_time)}\n\n"
         f"📌 Actual: {actual_text}\n"
         f"📊 Forecast: {forecast_text}\n"
-        f"📉 Previous: {previous_text}\n"
-        "\n"
+        f"📉 Previous: {previous_text}\n\n"
         "⚠️ Market volatility may increase sharply.\n"
-        "Trade with proper risk management.\n"
-        "\n"
+        "Trade with proper risk management.\n\n"
         "🔗 Forex Factory Calendar:\n"
         "https://www.forexfactory.com/calendar"
     )
@@ -157,13 +145,12 @@ def main():
     print(f"Recorded alerts: {len(sent_events)}")
     calendar = get_calendar()
     print(f"Calendar events received: {len(calendar)}")
-    # Current UTC time
     now = datetime.now(timezone.utc)
     new_alerts = 0
     for event in calendar:
-        # ----------------------------------------------------
+        # ====================================================
         # ONLY HIGH IMPACT
-        # ----------------------------------------------------
+        # ====================================================
         if str(event.get("impact", "")).strip().lower() != "high":
             continue
         title = event.get("title", "").strip()
@@ -171,23 +158,23 @@ def main():
         date_string = event.get("date", "").strip()
         if not title or not date_string:
             continue
-        # ----------------------------------------------------
+        # ====================================================
         # EVENT TIME
-        # ----------------------------------------------------
+        # ====================================================
         try:
             event_time = parse_event_time(date_string)
         except Exception as error:
             print(f"Could not parse event time: {error}")
             continue
-        # ----------------------------------------------------
+        # ====================================================
         # UNIQUE EVENT ID
-        # ----------------------------------------------------
+        # ====================================================
         event_id = f"{date_string}|{currency}|{title}"
         warning_id = event_id + "|15MIN"
         release_id = event_id + "|RELEASE"
-        # ----------------------------------------------------
+        # ====================================================
         # TIME UNTIL NEWS
-        # ----------------------------------------------------
+        # ====================================================
         seconds_until = (event_time - now).total_seconds()
         minutes_until = seconds_until / 60
         print(
@@ -197,11 +184,11 @@ def main():
         # ====================================================
         # 15-MINUTE WARNING
         # ====================================================
-        # Because GitHub runs every 5 minutes, we use a
-        # window around the 15-minute mark.
         if 10 <= minutes_until <= 17:
             if warning_id not in sent_events:
-                print(f"⏰ Sending 15-minute warning: {title}")
+                print(
+                    f"⏰ Sending 15-minute warning: {title}"
+                )
                 send_telegram(
                     warning_message(event, event_time)
                 )
@@ -210,11 +197,11 @@ def main():
         # ====================================================
         # RELEASE ALERT
         # ====================================================
-        # GitHub runs every 5 minutes, so we allow a window
-        # around the release time.
         elif -3 <= minutes_until <= 3:
             if release_id not in sent_events:
-                print(f"🚨 Sending release alert: {title}")
+                print(
+                    f"🚨 Sending release alert: {title}"
+                )
                 send_telegram(
                     release_message(event, event_time)
                 )
